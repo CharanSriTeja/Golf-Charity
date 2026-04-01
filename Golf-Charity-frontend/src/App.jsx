@@ -323,7 +323,7 @@ function HomePage({ setPage, setSelectedCharity }) {
           </p>
           <div className="hero-actions fade-up delay-3">
             <button className="btn-primary" onClick={() => { setPage("pricing"); window.scrollTo(0,0); }}>
-              Start for ₹999/mo →
+              Start for ��999/mo →
             </button>
             <button className="btn-outline" onClick={() => { setPage("how-it-works"); window.scrollTo(0,0); }}>
               See how it works
@@ -1081,26 +1081,147 @@ function Footer({ setPage }) {
 }
 
 // ── APP ROOT ───────────────────────────────────────────────────────────────
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import { LoginPage } from "./pages/LoginPage";
+import { SignupPage } from "./pages/SignupPage";
+import { DashboardPage } from "./pages/DashboardPage";
+import { ScoresPage } from "./pages/ScoresPage";
+import { MyCharityPage } from "./pages/MyCharityPage";
+import { DrawParticipationPage } from "./pages/DrawParticipationPage";
+import { WinningsPage } from "./pages/WinningsPage";
+import { AdminDashboardPage } from "./pages/AdminDashboardPage";
+import { UserManagementPage } from "./pages/UserManagementPage";
+import { DrawManagementPage } from "./pages/DrawManagementPage";
+import { CharityManagementPage } from "./pages/CharityManagementPage";
+import { PayoutManagementPage } from "./pages/PayoutManagementPage";
+import { CheckoutPage } from "./pages/CheckoutPage";
+import { PaymentSuccessPage } from "./pages/PaymentSuccessPage";
+import { PaymentFailurePage } from "./pages/PaymentFailurePage";
+import { ProfilePage } from "./pages/ProfilePage";
+import { ForgotPasswordPage } from "./pages/ForgotPasswordPage";
+import { SubscriptionsManagementPage } from "./pages/SubscriptionsManagementPage";
+
 export default function App() {
-  const [page, setPage] = useState("home");
   const [selectedCharity, setSelectedCharity] = useState(null);
 
-  const renderPage = () => {
-    switch (page) {
-      case "home": return <HomePage setPage={setPage} setSelectedCharity={setSelectedCharity} />;
-      case "how-it-works": return <HowItWorksPage setPage={setPage} />;
-      case "charities": return <CharitiesPage setPage={setPage} setSelectedCharity={setSelectedCharity} />;
-      case "charity-detail": return <CharityDetailPage charity={selectedCharity} setPage={setPage} />;
-      case "pricing": return <PricingPage setPage={setPage} />;
-      default: return <HomePage setPage={setPage} setSelectedCharity={setSelectedCharity} />;
-    }
-  };
-
   return (
-    <>
-      <GlobalStyle />
-      <Navbar page={page} setPage={setPage} />
-      {renderPage()}
-    </>
+    <BrowserRouter>
+      <AuthProvider>
+        <GlobalStyle />
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<Navbar page="home" setPage={() => {}} />} />
+          <Route path="/home" element={
+            <>
+              <Navbar page="home" setPage={() => {}} />
+              <HomePage setPage={() => {}} setSelectedCharity={setSelectedCharity} />
+            </>
+          } />
+          <Route path="/how-it-works" element={
+            <>
+              <Navbar page="how-it-works" setPage={() => {}} />
+              <HowItWorksPage setPage={() => {}} />
+            </>
+          } />
+          <Route path="/charities" element={
+            <>
+              <Navbar page="charities" setPage={() => {}} />
+              <CharitiesPage setPage={() => {}} setSelectedCharity={setSelectedCharity} />
+            </>
+          } />
+          <Route path="/charities/:id" element={
+            <>
+              <Navbar page="charities" setPage={() => {}} />
+              <CharityDetailPage charity={selectedCharity} setPage={() => {}} />
+            </>
+          } />
+          <Route path="/pricing" element={
+            <>
+              <Navbar page="pricing" setPage={() => {}} />
+              <PricingPage setPage={() => {}} />
+            </>
+          } />
+          
+          {/* Auth Routes */}
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignupPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          
+          {/* Dashboard Routes (Protected) */}
+          <Route path="/dashboard" element={
+            <ProtectedRoute>
+              <DashboardPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/dashboard/scores" element={
+            <ProtectedRoute>
+              <ScoresPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/dashboard/charity" element={
+            <ProtectedRoute>
+              <MyCharityPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/dashboard/draws" element={
+            <ProtectedRoute>
+              <DrawParticipationPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/dashboard/winnings" element={
+            <ProtectedRoute>
+              <WinningsPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/dashboard/profile" element={
+            <ProtectedRoute>
+              <ProfilePage />
+            </ProtectedRoute>
+          } />
+          
+          {/* Admin Routes (Protected) */}
+          <Route path="/admin" element={
+            <ProtectedRoute requiredRole="admin">
+              <AdminDashboardPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/users" element={
+            <ProtectedRoute requiredRole="admin">
+              <UserManagementPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/draws" element={
+            <ProtectedRoute requiredRole="admin">
+              <DrawManagementPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/charities" element={
+            <ProtectedRoute requiredRole="admin">
+              <CharityManagementPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/payouts" element={
+            <ProtectedRoute requiredRole="admin">
+              <PayoutManagementPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/subscriptions" element={
+            <ProtectedRoute requiredRole="admin">
+              <SubscriptionsManagementPage />
+            </ProtectedRoute>
+          } />
+          
+          {/* Payment Routes */}
+          <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/payment/success" element={<PaymentSuccessPage />} />
+          <Route path="/payment/failure" element={<PaymentFailurePage />} />
+          
+          {/* Redirect unmapped routes to home */}
+          <Route path="*" element={<Navigate to="/home" replace />} />
+        </Routes>
+      </AuthProvider>
+    </BrowserRouter>
   );
 }

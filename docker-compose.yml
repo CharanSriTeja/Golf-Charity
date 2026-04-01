@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: golf_charity_mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password123
+      MONGO_INITDB_DATABASE: golf_charity
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - golf_charity_network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./Golf-Charity-backend
+      dockerfile: Dockerfile
+    container_name: golf_charity_backend
+    ports:
+      - "5000:5000"
+    environment:
+      NODE_ENV: development
+      PORT: 5000
+      MONGODB_URI: mongodb://admin:password123@mongodb:27017/golf_charity
+      JWT_SECRET: your_jwt_secret_change_in_production
+      STRIPE_SECRET_KEY: sk_test_your_stripe_key
+      STRIPE_PUBLISHABLE_KEY: pk_test_your_stripe_key
+      FRONTEND_URL: http://localhost:5173
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - golf_charity_network
+    volumes:
+      - ./Golf-Charity-backend:/app
+      - /app/node_modules
+    command: npm run dev
+
+  frontend:
+    build:
+      context: ./Golf-Charity-frontend
+      dockerfile: Dockerfile
+    container_name: golf_charity_frontend
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: http://localhost:5000/api
+      VITE_STRIPE_PUBLIC_KEY: pk_test_your_stripe_key
+    depends_on:
+      - backend
+    networks:
+      - golf_charity_network
+    volumes:
+      - ./Golf-Charity-frontend:/app
+      - /app/node_modules
+    command: npm run dev
+
+volumes:
+  mongodb_data:
+    driver: local
+
+networks:
+  golf_charity_network:
+    driver: bridge
