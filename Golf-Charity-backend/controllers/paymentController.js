@@ -1,26 +1,31 @@
-import Stripe from 'stripe';
+import Razorpay from 'razorpay';
+import crypto from 'crypto';
 import User from '../models/User.js';
 import Transaction from '../models/Transaction.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET,
+});
 
 const PLANS = {
   monthly: {
-    amount: 99900,
-    currency: 'inr',
+    amount: 99900, // Amount in paise (999 INR)
+    currency: 'INR',
     interval: 'month',
-    description: 'Monthly subscription - ₹999/month',
+    description: 'Monthly subscription - Rs.999/month',
   },
   yearly: {
-    amount: 999900,
-    currency: 'inr',
+    amount: 999900, // Amount in paise (9999 INR)
+    currency: 'INR',
     interval: 'year',
-    description: 'Yearly subscription - ₹9,999/year',
+    description: 'Yearly subscription - Rs.9,999/year',
   },
 };
 
-export const createPaymentIntent = asyncHandler(async (req, res) => {
+// Create a Razorpay order
+export const createOrder = asyncHandler(async (req, res) => {
   const { plan } = req.body;
 
   if (!plan || !PLANS[plan]) {
@@ -30,48 +35,72 @@ export const createPaymentIntent = asyncHandler(async (req, res) => {
   const planDetails = PLANS[plan];
   const user = await User.findById(req.user.id);
 
-  const paymentIntent = await stripe.paymentIntents.create({
+  // Create Razorpay order
+  const options = {
     amount: planDetails.amount,
     currency: planDetails.currency,
-    metadata: {
+    receipt: `receipt_${req.user.id}_${Date.now()}`,
+    notes: {
       userId: req.user.id,
       plan: plan,
       email: user.email,
     },
-  });
+  };
 
+  const order = await razorpay.orders.create(options);
+
+  // Create pending transaction
   const transaction = await Transaction.create({
     userId: req.user.id,
     type: 'subscription',
     amount: planDetails.amount / 100,
     plan,
     status: 'pending',
-    stripePaymentIntentId: paymentIntent.id,
+    razorpayOrderId: order.id,
     description: planDetails.description,
   });
 
   res.status(200).json({
     success: true,
-    clientSecret: paymentIntent.client_secret,
+    orderId: order.id,
+    amount: planDetails.amount,
+    currency: planDetails.currency,
     transactionId: transaction._id,
+    key: process.env.RAZORPAY_KEY_ID,
   });
 });
 
-export const confirmPayment = asyncHandler(async (req, res) => {
-  const { paymentIntentId, plan } = req.body;
+// Verify Razorpay payment
+export const verifyPayment = asyncHandler(async (req, res) => {
+  const { razorpay_order_id, razorpay_payment_id, razorpay_signature, plan } = req.body;
 
-  const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+  // Verify signature
+  const body = razorpay_order_id + '|' + razorpay_payment_id;
+  const expectedSignature = crypto
+    .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+    .update(body.toString())
+    .digest('hex');
 
-  if (paymentIntent.status !== 'succeeded') {
-    return res.status(400).json({ success: false, message: 'Payment not successful' });
+  if (expectedSignature !== razorpay_signature) {
+    await Transaction.findOneAndUpdate(
+      { razorpayOrderId: razorpay_order_id },
+      { status: 'failed' }
+    );
+    return res.status(400).json({ success: false, message: 'Invalid payment signature' });
   }
 
+  // Update transaction
   const transaction = await Transaction.findOneAndUpdate(
-    { stripePaymentIntentId: paymentIntentId },
-    { status: 'success', stripeChargeId: paymentIntent.charges.data[0]?.id },
+    { razorpayOrderId: razorpay_order_id },
+    { 
+      status: 'success', 
+      razorpayPaymentId: razorpay_payment_id,
+      razorpaySignature: razorpay_signature 
+    },
     { new: true }
   );
 
+  // Update user subscription
   const user = await User.findById(req.user.id);
   const planDetails = PLANS[plan];
   const now = new Date();
@@ -84,7 +113,7 @@ export const confirmPayment = asyncHandler(async (req, res) => {
     status: 'active',
     startDate: now,
     endDate,
-    stripeCustomerId: paymentIntent.customer,
+    razorpayCustomerId: razorpay_payment_id,
   };
 
   user.totalSpent += planDetails.amount / 100;
@@ -92,11 +121,13 @@ export const confirmPayment = asyncHandler(async (req, res) => {
 
   res.status(200).json({
     success: true,
-    message: 'Subscription activated successfully',
+    message: 'Payment verified and subscription activated successfully',
     user,
+    transaction,
   });
 });
 
+// Get user transactions
 export const getTransactions = asyncHandler(async (req, res) => {
   const { page = 1, limit = 10, type, status } = req.query;
 
@@ -120,14 +151,13 @@ export const getTransactions = asyncHandler(async (req, res) => {
   });
 });
 
+// Cancel subscription
 export const cancelSubscription = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user.id);
 
-  if (!user.subscription.stripeSubscriptionId) {
+  if (user.subscription.status !== 'active') {
     return res.status(400).json({ success: false, message: 'No active subscription' });
   }
-
-  await stripe.subscriptions.cancel(user.subscription.stripeSubscriptionId);
 
   user.subscription.status = 'cancelled';
   await user.save();
@@ -138,27 +168,57 @@ export const cancelSubscription = asyncHandler(async (req, res) => {
   });
 });
 
+// Razorpay webhook handler
 export const webhook = asyncHandler(async (req, res) => {
-  const sig = req.headers['stripe-signature'];
-  let event;
+  const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
+  
+  const signature = req.headers['x-razorpay-signature'];
+  const body = JSON.stringify(req.body);
 
-  try {
-    event = stripe.webhooks.constructEvent(
-      req.body,
-      sig,
-      process.env.STRIPE_WEBHOOK_SECRET
-    );
-  } catch (err) {
-    return res.status(400).send(`Webhook Error: ${err.message}`);
+  const expectedSignature = crypto
+    .createHmac('sha256', webhookSecret)
+    .update(body)
+    .digest('hex');
+
+  if (signature !== expectedSignature) {
+    return res.status(400).json({ success: false, message: 'Invalid webhook signature' });
   }
 
-  if (event.type === 'payment_intent.succeeded') {
-    const paymentIntent = event.data.object;
+  const event = req.body.event;
+  const payload = req.body.payload;
+
+  if (event === 'payment.captured') {
+    const payment = payload.payment.entity;
     await Transaction.findOneAndUpdate(
-      { stripePaymentIntentId: paymentIntent.id },
-      { status: 'success' }
+      { razorpayOrderId: payment.order_id },
+      { status: 'success', razorpayPaymentId: payment.id }
+    );
+  }
+
+  if (event === 'payment.failed') {
+    const payment = payload.payment.entity;
+    await Transaction.findOneAndUpdate(
+      { razorpayOrderId: payment.order_id },
+      { status: 'failed' }
     );
   }
 
   res.status(200).json({ received: true });
+});
+
+// Get subscription plans
+export const getPlans = asyncHandler(async (req, res) => {
+  const plans = Object.entries(PLANS).map(([key, value]) => ({
+    id: key,
+    name: key.charAt(0).toUpperCase() + key.slice(1),
+    amount: value.amount / 100,
+    currency: value.currency,
+    interval: value.interval,
+    description: value.description,
+  }));
+
+  res.status(200).json({
+    success: true,
+    plans,
+  });
 });
