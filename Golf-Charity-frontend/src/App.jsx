@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 
 // ── GLOBAL STYLES ──────────────────────────────────────────────────────────
 const GlobalStyle = () => (
@@ -232,10 +233,17 @@ function Navbar({ page, setPage }) {
               ))}
             </ul>
             <div className="nav-cta">
-              <button className="btn-outline" style={{padding:"9px 20px",fontSize:"13px"}}
-                onClick={() => { setPage("pricing"); window.scrollTo(0,0); }}>
-                Subscribe
-              </button>
+              <Link to="/login" style={{
+                fontSize: "14px",
+                fontWeight: "500",
+                color: "var(--muted)",
+                transition: "color 0.2s"
+              }}>
+                Sign In
+              </Link>
+              <Link to="/signup" className="btn-primary" style={{padding:"9px 20px",fontSize:"13px"}}>
+                Sign Up
+              </Link>
             </div>
             <button className="hamburger" onClick={() => setMenuOpen(m => !m)}>
               <span /><span /><span />
@@ -247,6 +255,14 @@ function Navbar({ page, setPage }) {
         {links.map(l => (
           <li key={l.id} onClick={() => { setPage(l.id); window.scrollTo(0,0); setMenuOpen(false); }}>{l.label}</li>
         ))}
+        <li style={{ borderBottom: "none", paddingTop: "16px", display: "flex", gap: "12px" }}>
+          <Link to="/login" className="btn-outline" style={{ padding: "10px 24px", fontSize: "14px", flex: 1, textAlign: "center" }} onClick={() => setMenuOpen(false)}>
+            Sign In
+          </Link>
+          <Link to="/signup" className="btn-primary" style={{ padding: "10px 24px", fontSize: "14px", flex: 1, textAlign: "center" }} onClick={() => setMenuOpen(false)}>
+            Sign Up
+          </Link>
+        </li>
       </ul>
     </>
   );
