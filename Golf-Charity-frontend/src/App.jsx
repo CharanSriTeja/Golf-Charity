@@ -1096,6 +1096,12 @@ import { UserManagementPage } from "./pages/UserManagementPage";
 import { DrawManagementPage } from "./pages/DrawManagementPage";
 import { CharityManagementPage } from "./pages/CharityManagementPage";
 import { PayoutManagementPage } from "./pages/PayoutManagementPage";
+import { CheckoutPage } from "./pages/CheckoutPage";
+import { PaymentSuccessPage } from "./pages/PaymentSuccessPage";
+import { PaymentFailurePage } from "./pages/PaymentFailurePage";
+import { ProfilePage } from "./pages/ProfilePage";
+import { ForgotPasswordPage } from "./pages/ForgotPasswordPage";
+import { SubscriptionsManagementPage } from "./pages/SubscriptionsManagementPage";
 
 export default function App() {
   const [selectedCharity, setSelectedCharity] = useState(null);
@@ -1141,6 +1147,7 @@ export default function App() {
           {/* Auth Routes */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           
           {/* Dashboard Routes (Protected) */}
           <Route path="/dashboard" element={
@@ -1170,7 +1177,7 @@ export default function App() {
           } />
           <Route path="/dashboard/profile" element={
             <ProtectedRoute>
-              <div style={{padding: "40px", textAlign: "center"}}>Profile page coming soon</div>
+              <ProfilePage />
             </ProtectedRoute>
           } />
           
@@ -1202,9 +1209,14 @@ export default function App() {
           } />
           <Route path="/admin/subscriptions" element={
             <ProtectedRoute requiredRole="admin">
-              <div style={{padding: "40px", textAlign: "center"}}>Subscriptions page coming soon</div>
+              <SubscriptionsManagementPage />
             </ProtectedRoute>
           } />
+          
+          {/* Payment Routes */}
+          <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/payment/success" element={<PaymentSuccessPage />} />
+          <Route path="/payment/failure" element={<PaymentFailurePage />} />
           
           {/* Redirect unmapped routes to home */}
           <Route path="*" element={<Navigate to="/home" replace />} />
