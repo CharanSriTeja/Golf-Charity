@@ -24,8 +24,10 @@ const transactionSchema = new mongoose.Schema({
     enum: ['pending', 'success', 'failed', 'cancelled'],
     default: 'pending',
   },
-  stripePaymentIntentId: String,
-  stripeChargeId: String,
+  // Razorpay fields
+  razorpayOrderId: String,
+  razorpayPaymentId: String,
+  razorpaySignature: String,
   plan: String,
   period: String,
   relatedDrawId: {
