@@ -1,15 +1,7 @@
 import client from './client';
 
 export const drawsAPI = {
-  getAll: () => 
-    client.get('/draws'),
-  
-  getById: (id) => 
-    client.get(`/draws/${id}`),
-  
-  getCurrent: () => 
-    client.get('/draws/current'),
-  
-  getHistory: (limit = 12) => 
-    client.get('/draws/history', { params: { limit } })
+  getCurrent: () => client.get('/draws/active'),
+  getHistory: (params) => client.get('/draws', { params }),
+  getDrawById: (id) => client.get(`/draws/${id}`)
 };

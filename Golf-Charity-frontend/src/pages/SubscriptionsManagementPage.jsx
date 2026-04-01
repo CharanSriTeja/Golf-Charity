@@ -1,237 +1,107 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AdminSidebar } from '../components/AdminSidebar';
-import { Button } from '../components/Button';
+import { adminAPI } from '../api/admin';
 
 export const SubscriptionsManagementPage = () => {
-  const [subscriptions, setSubscriptions] = useState([
-    { id: 1, userId: 'user_001', userName: 'John Doe', email: 'john@example.com', plan: 'monthly', status: 'active', startDate: '2024-01-15', endDate: '2025-01-14', amount: '₹999' },
-    { id: 2, userId: 'user_002', userName: 'Jane Smith', email: 'jane@example.com', plan: 'yearly', status: 'active', startDate: '2023-06-01', endDate: '2024-06-01', amount: '₹9,999' },
-    { id: 3, userId: 'user_003', userName: 'Raj Patel', email: 'raj@example.com', plan: 'monthly', status: 'cancelled', startDate: '2023-12-01', endDate: '2024-01-01', amount: '₹999' },
-  ]);
-
+  const [subscriptions, setSubscriptions] = useState([]);
   const [filterStatus, setFilterStatus] = useState('all');
+  const [loading, setLoading] = useState(true);
+
+  const fetchSubs = async () => {
+    try {
+      const res = await adminAPI.getSubscriptions();
+      setSubscriptions(res.data.transactions || []);
+    } catch(err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSubs();
+  }, []);
 
   const filteredSubscriptions = filterStatus === 'all' 
     ? subscriptions 
     : subscriptions.filter(s => s.status === filterStatus);
 
-  const getStatusColor = (status) => {
+  const getStatusClass = (status) => {
     switch (status) {
-      case 'active': return 'var(--accent)';
-      case 'cancelled': return '#DC2626';
-      case 'expired': return 'var(--muted)';
-      default: return 'var(--ink)';
+      case 'success':
+      case 'active': return 'bg-green-100 text-green-700';
+      case 'failed':
+      case 'cancelled': return 'bg-red-100 text-red-700';
+      default: return 'bg-gray-100 text-gray-700';
     }
   };
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)' }}>
+    <div className="flex min-h-screen bg-bg">
       <AdminSidebar />
-      <div style={{ flex: 1, padding: '40px' }}>
-        <style>{`
-          .page-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 40px;
-            flex-wrap: wrap;
-            gap: 20px;
-          }
-          .page-title {
-            font-size: 32px;
-            font-weight: 700;
-            font-family: 'Playfair Display', serif;
-          }
-          .filter-group {
-            display: flex;
-            gap: 8px;
-          }
-          .filter-btn {
-            padding: 8px 16px;
-            border: 1px solid var(--border);
-            background: var(--surface);
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.2s;
-          }
-          .filter-btn.active {
-            background: var(--accent);
-            color: white;
-            border-color: var(--accent);
-          }
-          .filter-btn:hover {
-            border-color: var(--accent);
-          }
-          .table-container {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            overflow-x: auto;
-          }
-          table {
-            width: 100%;
-            border-collapse: collapse;
-          }
-          thead {
-            background: var(--bg);
-            border-bottom: 2px solid var(--border);
-          }
-          th {
-            padding: 16px;
-            text-align: left;
-            font-weight: 600;
-            color: var(--ink);
-            font-size: 14px;
-          }
-          tbody tr {
-            border-bottom: 1px solid var(--border);
-            transition: background 0.2s;
-          }
-          tbody tr:hover {
-            background: var(--gold-light);
-          }
-          td {
-            padding: 16px;
-            font-size: 14px;
-          }
-          .status-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 50px;
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: capitalize;
-          }
-          .status-active {
-            background: var(--accent-light);
-            color: var(--accent);
-          }
-          .status-cancelled {
-            background: #FEE2E2;
-            color: #DC2626;
-          }
-          .status-expired {
-            background: #F3F4F6;
-            color: var(--muted);
-          }
-          .action-buttons {
-            display: flex;
-            gap: 8px;
-          }
-          .action-btn {
-            padding: 4px 12px;
-            border: 1px solid var(--border);
-            background: transparent;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-            transition: all 0.2s;
-          }
-          .action-btn:hover {
-            background: var(--accent);
-            color: white;
-            border-color: var(--accent);
-          }
-          .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 16px;
-            margin-bottom: 40px;
-          }
-          .stat-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 20px;
-            text-align: center;
-          }
-          .stat-num {
-            font-size: 28px;
-            font-weight: 700;
-            color: var(--accent);
-            margin-bottom: 8px;
-            font-family: 'Playfair Display', serif;
-          }
-          .stat-label {
-            font-size: 13px;
-            color: var(--muted);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-          }
-        `}</style>
-
-        <div className="page-header">
-          <h1 className="page-title">Subscriptions</h1>
-          <div className="filter-group">
-            {['all', 'active', 'cancelled', 'expired'].map(status => (
+      <div className="flex-1 p-10 overflow-auto">
+        <div className="flex justify-between items-center mb-10 flex-wrap gap-5">
+          <h1 className="text-[32px] font-[700] font-playfair text-ink">Subscriptions & Payments Live</h1>
+          <div className="flex gap-2 flex-wrap">
+            {['all', 'success', 'pending', 'failed', 'active'].map(status => (
               <button
                 key={status}
-                className={`filter-btn ${filterStatus === status ? 'active' : ''}`}
+                className={`px-4 py-2 border border-border bg-surface rounded-md cursor-pointer text-sm transition-all hover:border-accent ${filterStatus === status ? 'bg-accent text-white border-accent' : ''}`}
                 onClick={() => setFilterStatus(status)}
               >
-                {status.charAt(0).toUpperCase() + status.slice(1)}
+                {status.toUpperCase()}
               </button>
             ))}
           </div>
         </div>
 
-        <div className="stats-grid">
-          <div className="stat-card">
-            <div className="stat-num">{subscriptions.length}</div>
-            <div className="stat-label">Total Subscriptions</div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+          <div className="bg-surface border border-border rounded-lg p-5 text-center">
+            <div className="text-[28px] font-[700] text-accent font-playfair mb-2">{subscriptions.length}</div>
+            <div className="text-[13px] text-muted uppercase tracking-wide">Total Logged</div>
           </div>
-          <div className="stat-card">
-            <div className="stat-num">{subscriptions.filter(s => s.status === 'active').length}</div>
-            <div className="stat-label">Active</div>
+          <div className="bg-surface border border-border rounded-lg p-5 text-center">
+            <div className="text-[28px] font-[700] text-accent font-playfair mb-2">{subscriptions.filter(s => ['active', 'success'].includes(s.status)).length}</div>
+            <div className="text-[13px] text-muted uppercase tracking-wide">Successful / Active</div>
           </div>
-          <div className="stat-card">
-            <div className="stat-num">₹{(subscriptions.filter(s => s.status === 'active').length * 999).toLocaleString('en-IN')}</div>
-            <div className="stat-label">Monthly Revenue</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-num">{Math.round((subscriptions.filter(s => s.status === 'active').length / subscriptions.length) * 100)}%</div>
-            <div className="stat-label">Retention Rate</div>
+          <div className="bg-surface border border-border rounded-lg p-5 text-center">
+            <div className="text-[28px] font-[700] text-accent font-playfair mb-2">
+              ₹{subscriptions.filter(s => ['active', 'success'].includes(s.status)).reduce((a, b) => a + (b.amount || 0), 0).toLocaleString()}
+            </div>
+            <div className="text-[13px] text-muted uppercase tracking-wide">Gross Captured API</div>
           </div>
         </div>
 
-        <div className="table-container">
-          <table>
-            <thead>
+        <div className="bg-surface border border-border rounded-lg overflow-x-auto">
+          <table className="w-full border-collapse">
+            <thead className="bg-bg border-b-2 border-border">
               <tr>
-                <th>User</th>
-                <th>Email</th>
-                <th>Plan</th>
-                <th>Amount</th>
-                <th>Start Date</th>
-                <th>End Date</th>
-                <th>Status</th>
-                <th>Actions</th>
+                <th className="p-4 text-left font-[600] text-ink text-sm">Target ID</th>
+                <th className="p-4 text-left font-[600] text-ink text-sm">Entity Type</th>
+                <th className="p-4 text-left font-[600] text-ink text-sm">Tier</th>
+                <th className="p-4 text-left font-[600] text-ink text-sm">Base Value</th>
+                <th className="p-4 text-left font-[600] text-ink text-sm">Logged On</th>
+                <th className="p-4 text-left font-[600] text-ink text-sm">Gateway Conf.</th>
+                <th className="p-4 text-left font-[600] text-ink text-sm">State</th>
               </tr>
             </thead>
             <tbody>
-              {filteredSubscriptions.map(sub => (
-                <tr key={sub.id}>
-                  <td><strong>{sub.userName}</strong></td>
-                  <td>{sub.email}</td>
-                  <td style={{ textTransform: 'capitalize' }}>{sub.plan}</td>
-                  <td>{sub.amount}</td>
-                  <td>{sub.startDate}</td>
-                  <td>{sub.endDate}</td>
-                  <td>
-                    <span className={`status-badge status-${sub.status}`}>
+              {loading ? (
+                <tr><td colSpan="7" className="p-6 text-center text-muted">Establishing remote link...</td></tr>
+              ) : filteredSubscriptions.length === 0 ? (
+                 <tr><td colSpan="7" className="p-6 text-center text-muted">No database transactions map to this filter.</td></tr>
+              ) : filteredSubscriptions.map(sub => (
+                <tr key={sub._id} className="border-b border-border transition-colors hover:bg-gold-light">
+                  <td className="p-4 text-xs font-mono">{sub.userId || 'N/A'}</td>
+                  <td className="p-4 text-sm font-semibold capitalize">{sub.type}</td>
+                  <td className="p-4 text-sm capitalize">{sub.plan}</td>
+                  <td className="p-4 text-sm font-semibold text-gold">₹{(sub.amount || 0).toLocaleString()}</td>
+                  <td className="p-4 text-xs text-muted">{new Date(sub.createdAt).toLocaleString()}</td>
+                  <td className="p-4 text-xs font-mono">{sub.razorpayPaymentId || sub.razorpayOrderId || 'Pending'}</td>
+                  <td className="p-4">
+                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold capitalize ${getStatusClass(sub.status)}`}>
                       {sub.status}
                     </span>
-                  </td>
-                  <td>
-                    <div className="action-buttons">
-                      <button className="action-btn">View</button>
-                      {sub.status === 'active' && (
-                        <button className="action-btn" style={{ borderColor: '#DC2626', color: '#DC2626' }}>
-                          Cancel
-                        </button>
-                      )}
-                    </div>
                   </td>
                 </tr>
               ))}

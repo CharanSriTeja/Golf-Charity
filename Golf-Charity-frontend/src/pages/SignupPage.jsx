@@ -29,7 +29,7 @@ export const SignupPage = () => {
     const loadCharities = async () => {
       try {
         const response = await charitiesAPI.getAll();
-        setCharities(response.data || []);
+        setCharities(response.data.charities || response.data || []);
       } catch (err) {
         console.error('Failed to load charities:', err);
       } finally {
@@ -219,7 +219,7 @@ export const SignupPage = () => {
               >
                 <option value="">Choose a charity...</option>
                 {charities.map(charity => (
-                  <option key={charity.id} value={charity.id}>
+                  <option key={charity._id || charity.id} value={charity._id || charity.id}>
                     {charity.name}
                   </option>
                 ))}

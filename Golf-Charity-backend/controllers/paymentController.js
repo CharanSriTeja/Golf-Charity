@@ -5,8 +5,8 @@ import Transaction from '../models/Transaction.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
 
 const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET,
+  key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_dummy_key_id',
+  key_secret: process.env.RAZORPAY_KEY_SECRET || 'dummy_secret_do_not_use',
 });
 
 const PLANS = {

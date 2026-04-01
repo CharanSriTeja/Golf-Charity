@@ -1,4 +1,5 @@
 import React, { createContext, useState, useEffect, useCallback } from 'react';
+import { authAPI } from '../api/auth';
 
 export const AuthContext = createContext(null);
 
@@ -30,26 +31,21 @@ export const AuthProvider = ({ children }) => {
     setLoading(true);
     setError(null);
     try {
-      // TODO: Replace with actual API call
-      const mockUser = {
-        id: '1',
-        email,
-        name: email.split('@')[0],
-        role: 'user',
-        charity: null,
-        subscription: 'active'
-      };
-      const mockToken = 'mock-jwt-token-' + Date.now();
+      const response = await authAPI.login(email, password);
+      // The backend returns an object with structure like:
+      // { success: true, token, user: { id, name, email, role, ... } }
+      const data = response.data;
       
-      setUser(mockUser);
-      setToken(mockToken);
-      localStorage.setItem('authToken', mockToken);
-      localStorage.setItem('user', JSON.stringify(mockUser));
+      setUser(data.user);
+      setToken(data.token);
+      localStorage.setItem('authToken', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
       
-      return mockUser;
+      return data.user;
     } catch (err) {
-      setError(err.message);
-      throw err;
+      const msg = err.response?.data?.message || err.message || 'Login failed';
+      setError(msg);
+      throw new Error(msg);
     } finally {
       setLoading(false);
     }
@@ -59,32 +55,30 @@ export const AuthProvider = ({ children }) => {
     setLoading(true);
     setError(null);
     try {
-      // TODO: Replace with actual API call
-      const mockUser = {
-        id: Math.random().toString(36).substr(2, 9),
-        email,
-        name,
-        role: 'user',
-        charity: charityId,
-        subscription: 'pending'
-      };
-      const mockToken = 'mock-jwt-token-' + Date.now();
+      const response = await authAPI.signup(email, password, name, charityId);
+      const data = response.data;
       
-      setUser(mockUser);
-      setToken(mockToken);
-      localStorage.setItem('authToken', mockToken);
-      localStorage.setItem('user', JSON.stringify(mockUser));
+      setUser(data.user);
+      setToken(data.token);
+      localStorage.setItem('authToken', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
       
-      return mockUser;
+      return data.user;
     } catch (err) {
-      setError(err.message);
-      throw err;
+      const msg = err.response?.data?.message || err.message || 'Signup failed';
+      setError(msg);
+      throw new Error(msg);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    try {
+      await authAPI.logout();
+    } catch (err) {
+      console.warn("Logout API failed, continuing local logout", err);
+    }
     setUser(null);
     setToken(null);
     setError(null);

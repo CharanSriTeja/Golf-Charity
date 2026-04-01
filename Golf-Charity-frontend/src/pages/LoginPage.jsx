@@ -43,8 +43,12 @@ export const LoginPage = () => {
     if (!validateForm()) return;
 
     try {
-      await login(formData.email, formData.password);
-      navigate('/dashboard');
+      const loggedInUser = await login(formData.email, formData.password);
+      if (loggedInUser?.role === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (err) {
       setGeneralError(err.message || 'Login failed. Please try again.');
     }
