@@ -5,7 +5,13 @@ import User from '../models/User.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
 
 export const createDraw = asyncHandler(async (req, res) => {
-  const { month, year, startDate, endDate, resultsAnnounceDate, prizePool, prizes } = req.body;
+  const { month, year, startDate, endDate, resultsAnnounceDate, prizePool, prizes, status } = req.body;
+
+  // Ensure only one active draw at a time if the new one is active
+  const targetStatus = status || 'active';
+  if (targetStatus === 'active') {
+    await Draw.updateMany({ status: 'active' }, { status: 'closed' });
+  }
 
   const draw = await Draw.create({
     month,
@@ -15,6 +21,7 @@ export const createDraw = asyncHandler(async (req, res) => {
     resultsAnnounceDate,
     prizePool,
     prizes,
+    status: targetStatus,
   });
 
   res.status(201).json({
@@ -100,37 +107,45 @@ export const announceDraw = asyncHandler(async (req, res) => {
     return res.status(404).json({ success: false, message: 'Draw not found' });
   }
 
-  // Get top scorers
-  const topScores = await Score.find({ drawId: req.params.id })
-    .populate('userId')
-    .sort({ score: -1 })
-    .limit(10);
+  // Calculate algorithmically from users with active scores
+  const usersWithScores = await User.find({ 'scores.0': { $exists: true } });
+  
+  const mappedScores = usersWithScores.map(u => {
+    const validScores = u.scores.filter(s => s.stablefordPoints > 0);
+    const avgScore = validScores.length > 0 
+      ? Math.round(validScores.reduce((a, b) => a + b.stablefordPoints, 0) / validScores.length)
+      : 0;
+    return {
+      userId: u,
+      score: avgScore
+    };
+  }).filter(u => u.score > 0).sort((a, b) => b.score - a.score).slice(0, 10);
 
   const winners = [];
   const prizes = draw.prizes || [];
 
-  for (let i = 0; i < topScores.length && i < prizes.length; i++) {
+  for (let i = 0; i < mappedScores.length && i < prizes.length; i++) {
     const winning = await Winning.create({
-      userId: topScores[i].userId._id,
+      userId: mappedScores[i].userId._id,
       drawId: draw._id,
       prizeAmount: prizes[i].amount,
       position: i + 1,
-      donationAmount: (prizes[i].amount * (topScores[i].userId.donationPercentage || 30)) / 100,
-      charityId: topScores[i].userId.charityId,
+      donationAmount: (prizes[i].amount * (mappedScores[i].userId.donationPercentage || 30)) / 100,
+      charityId: mappedScores[i].userId.charityId,
       status: 'pending',
     });
 
     winners.push({
-      userId: topScores[i].userId._id,
+      userId: mappedScores[i].userId._id,
       position: i + 1,
-      score: topScores[i].score,
+      score: mappedScores[i].score,
       prizeAmount: prizes[i].amount,
     });
   }
 
   draw.winners = winners;
   draw.status = 'completed';
-  draw.totalParticipants = await Score.countDocuments({ drawId: req.params.id });
+  draw.totalParticipants = usersWithScores.length;
   await draw.save();
 
   res.status(200).json({

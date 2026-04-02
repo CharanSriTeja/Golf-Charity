@@ -54,7 +54,8 @@ export const ScoresPage = () => {
          date: new Date().toISOString()
       }));
 
-      const client = require('../api/client').default;
+      const clientModule = await import('../api/client');
+      const client = clientModule.default;
       await client.put('/users/profile', { scores: formattedScores });
       await updateUser({ ...user, scores: formattedScores });
       

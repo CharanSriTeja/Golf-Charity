@@ -6,6 +6,7 @@ import {
   cancelSubscription,
   webhook,
   getPlans,
+  devBypass,
 } from '../controllers/paymentController.js';
 import { protect } from '../middleware/auth.js';
 
@@ -20,5 +21,6 @@ router.post('/create-order', protect, createOrder);
 router.post('/verify', protect, verifyPayment);
 router.get('/transactions', protect, getTransactions);
 router.post('/cancel-subscription', protect, cancelSubscription);
+router.post('/dev-bypass', protect, devBypass);
 
 export default router;

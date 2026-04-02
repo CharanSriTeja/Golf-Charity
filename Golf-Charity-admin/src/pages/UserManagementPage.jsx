@@ -13,7 +13,7 @@ export const UserManagementPage = () => {
 
   const fetchUsers = async () => {
     try {
-      const res = await adminAPI.getUsers();
+      const res = await adminAPI.getUsers({ role: 'user' });
       setUsers(res.data.users || []);
     } catch (err) {
       console.error(err);

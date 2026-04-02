@@ -114,7 +114,7 @@ export function Navbar({ page }) {
                   <button className="nav-auth-link" onClick={() => handleNav("/dashboard")}>
                     Dashboard
                   </button>
-                  <button className="nav-auth-link" onClick={() => { logout(); handleNav("/"); }}>
+                  <button className="nav-auth-link" onClick={async () => { await logout(); window.location.href = "/"; }}>
                     Logout
                   </button>
                 </>
@@ -143,7 +143,7 @@ export function Navbar({ page }) {
         {isAuthenticated ? (
           <>
             <li onClick={() => handleNav("/dashboard")} style={{color: "var(--accent)", fontWeight: 700}}>Dashboard</li>
-            <li onClick={() => { logout(); handleNav("/"); }}>Logout</li>
+            <li onClick={async () => { await logout(); window.location.href = "/"; }}>Logout</li>
           </>
         ) : (
           <>

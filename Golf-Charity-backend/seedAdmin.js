@@ -11,7 +11,8 @@ const seedAdmin = async () => {
     await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/golf-charity');
     console.log('MongoDB connected');
 
-    const adminEmail = 'admin@playgivewin.com';
+    const adminEmail = 'admin@admin.com';
+    const adminPassword = 'password123';
     const existingAdmin = await User.findOne({ email: adminEmail });
 
     if (existingAdmin) {
@@ -22,7 +23,7 @@ const seedAdmin = async () => {
     const adminUser = new User({
       name: 'Super Admin',
       email: adminEmail,
-      password: 'AdminPassword123!',
+      password: adminPassword,
       role: 'admin',
       isActive: true,
       subscription: {
@@ -34,7 +35,7 @@ const seedAdmin = async () => {
     await adminUser.save();
     console.log('Admin user seeded successfully!');
     console.log(`Email: ${adminEmail}`);
-    console.log(`Password: AdminPassword123!`);
+    console.log(`Password: ${adminPassword}`);
 
     process.exit(0);
   } catch (err) {

@@ -14,7 +14,22 @@ export const DrawManagementPage = () => {
   const [currentDraws, setCurrentDraws] = useState([]);
   const [historyDraws, setHistoryDraws] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [formData, setFormData] = useState({ month: '', deadline: '', prizePool: 0 });
+  const getFutureDate = (offsetDays) => {
+    const d = new Date();
+    d.setDate(d.getDate() + offsetDays);
+    return d.toISOString().slice(0, 16);
+  };
+
+  const initialFormState = { 
+    month: 'Monthly Draw', 
+    year: new Date().getFullYear(),
+    startDate: new Date().toISOString().slice(0, 16),
+    endDate: getFutureDate(30),
+    resultsAnnounceDate: getFutureDate(31),
+    prizePool: 50000 
+  };
+
+  const [formData, setFormData] = useState(initialFormState);
 
   const loadDraws = async () => {
     try {
@@ -40,7 +55,7 @@ export const DrawManagementPage = () => {
     try {
       await adminAPI.createDraw(formData);
       setShowCreateDraw(false);
-      setFormData({ month: '', deadline: '', prizePool: 0 });
+      setFormData(initialFormState);
       loadDraws();
       alert("Draw created!");
     } catch (e) {
@@ -105,8 +120,8 @@ export const DrawManagementPage = () => {
                       <p className="font-playfair text-2xl font-bold text-accent">{(currentDraw.participants || 0).toLocaleString()}</p>
                     </div>
                     <div className="p-4 bg-white rounded-lg border border-border">
-                      <p className="text-muted text-sm mb-1">Current Deadline</p>
-                      <p className="font-playfair text-xl font-bold text-ink">{formatters.date(currentDraw.deadline)}</p>
+                      <p className="text-muted text-sm mb-1">Current End Date</p>
+                      <p className="font-playfair text-xl font-bold text-ink">{formatters.date(currentDraw.endDate)}</p>
                     </div>
                   </div>
 
@@ -126,7 +141,7 @@ export const DrawManagementPage = () => {
                 <div key={draw._id} className="bg-surface rounded-lg p-6 border border-border">
                   <div className="flex flex-col md:flex-row justify-between mb-4">
                     <h3 className="font-playfair text-xl font-bold text-ink">{draw.month}</h3>
-                    <p className="text-sm text-muted">Closed: {formatters.date(draw.deadline)}</p>
+                    <p className="text-sm text-muted">Closed: {formatters.date(draw.endDate)}</p>
                   </div>
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div><p className="text-muted text-xs">Pool Distributed</p><p className="font-bold text-gold">{formatters.currency(draw.prizePool)}</p></div>
@@ -144,10 +159,13 @@ export const DrawManagementPage = () => {
                   <h2 className="font-playfair text-2xl font-bold text-ink">New Database Draw</h2>
                   <button onClick={() => setShowCreateDraw(false)} className="text-ink hover:text-muted text-2xl">✕</button>
                 </div>
-                <div className="space-y-4 mb-6">
-                  <Input label="Month Title" value={formData.month} onChange={(e) => setFormData({...formData, month: e.target.value})} placeholder="e.g. April 2026" />
+                <div className="space-y-4 mb-6 overflow-y-auto max-h-[60vh] pr-2">
+                  <Input label="Month Title" value={formData.month} onChange={(e) => setFormData({...formData, month: e.target.value})} placeholder="e.g. April" />
+                  <Input label="Year" type="number" value={formData.year} onChange={(e) => setFormData({...formData, year: Number(e.target.value)})} />
+                  <Input label="Start Date" type="datetime-local" value={formData.startDate} onChange={(e) => setFormData({...formData, startDate: e.target.value})} />
+                  <Input label="End Date" type="datetime-local" value={formData.endDate} onChange={(e) => setFormData({...formData, endDate: e.target.value})} />
+                  <Input label="Results Announce Date" type="datetime-local" value={formData.resultsAnnounceDate} onChange={(e) => setFormData({...formData, resultsAnnounceDate: e.target.value})} />
                   <Input label="Prize Pool" type="number" value={formData.prizePool} onChange={(e) => setFormData({...formData, prizePool: Number(e.target.value)})} />
-                  <Input label="Deadline" type="datetime-local" value={formData.deadline} onChange={(e) => setFormData({...formData, deadline: e.target.value})} />
                 </div>
                 <div className="flex gap-3">
                   <button onClick={() => setShowCreateDraw(false)} className="flex-1 px-4 py-2 rounded-lg bg-bg text-ink font-600 hover:bg-opacity-80">Cancel</button>

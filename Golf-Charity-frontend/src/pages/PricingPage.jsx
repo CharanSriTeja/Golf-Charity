@@ -64,7 +64,7 @@ export function PricingPage() {
             {/* Monthly */}
             <PricingCard
               name="Monthly"
-              price="₹999"
+              price="₹1"
               period="/month"
               tag={null}
               features={features}
@@ -75,13 +75,13 @@ export function PricingPage() {
             {/* Yearly */}
             <PricingCard
               name="Yearly"
-              price="₹9,999"
+              price="₹10"
               period="/year"
               tag="Best value"
               features={[...features,...yearExtra]}
               cta="Subscribe Yearly"
               accent={true}
-              note="That's ₹833/mo — save ₹1,989"
+              note="Test Pricing"
               onSubscribe={handleSubscribe}
             />
           </div>

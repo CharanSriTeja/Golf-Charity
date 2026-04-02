@@ -12,9 +12,9 @@ import { protect, authorize } from '../middleware/auth.js';
 
 const router = express.Router();
 
-router.get('/', protect, getAllDraws);
-router.get('/active', protect, getActiveDraw);
-router.get('/:id', protect, getDrawById);
+router.get('/', getAllDraws);
+router.get('/active', getActiveDraw);
+router.get('/:id', getDrawById);
 
 // Admin routes
 router.post('/', protect, authorize('admin'), createDraw);

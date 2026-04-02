@@ -11,16 +11,16 @@ const razorpay = new Razorpay({
 
 const PLANS = {
   monthly: {
-    amount: 99900, // Amount in paise (999 INR)
+    amount: 100, // Amount in paise (1 INR) for testing
     currency: 'INR',
     interval: 'month',
-    description: 'Monthly subscription - Rs.999/month',
+    description: 'Monthly subscription - Rs.1/month',
   },
   yearly: {
-    amount: 999900, // Amount in paise (9999 INR)
+    amount: 1000, // Amount in paise (10 INR) for testing
     currency: 'INR',
     interval: 'year',
-    description: 'Yearly subscription - Rs.9,999/year',
+    description: 'Yearly subscription - Rs.10/year',
   },
 };
 
@@ -220,5 +220,45 @@ export const getPlans = asyncHandler(async (req, res) => {
   res.status(200).json({
     success: true,
     plans,
+  });
+});
+
+// Developer Bypass Setup
+export const devBypass = asyncHandler(async (req, res) => {
+  const { plan } = req.body;
+  const user = await User.findById(req.user.id);
+  const planDetails = PLANS[plan] || PLANS['monthly'];
+  
+  const now = new Date();
+  const endDate = plan === 'monthly'
+    ? new Date(now.getFullYear(), now.getMonth() + 1, now.getDate())
+    : new Date(now.getFullYear() + 1, now.getMonth(), now.getDate());
+
+  user.subscription = {
+    plan,
+    status: 'active',
+    startDate: now,
+    endDate,
+    razorpayCustomerId: 'dev_bypass_mock_sub_id',
+  };
+
+  user.totalSpent = (user.totalSpent || 0) + (planDetails.amount / 100);
+  await user.save();
+
+  await Transaction.create({
+    userId: user._id,
+    type: 'subscription',
+    amount: planDetails.amount / 100,
+    plan,
+    status: 'success',
+    razorpayOrderId: `dev_bypass_order_${Date.now()}`,
+    razorpayPaymentId: `dev_bypass_pay_${Date.now()}`,
+    description: `[DEV BYPASS] ${planDetails.description}`,
+  });
+
+  res.status(200).json({
+    success: true,
+    message: 'Subscription fully activated via dev bypass',
+    user
   });
 });

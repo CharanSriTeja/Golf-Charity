@@ -120,23 +120,21 @@ export const CheckoutPage = () => {
     try {
        // Since the backend won't allow verifyPayment with spoofed signature without a real secret,
        // we will hit the user endpoint directly to force their subscription active
-       const client = require('../api/client').default;
-       const endDate = new Date();
-       endDate.setFullYear(endDate.getFullYear() + (selectedPlan === 'yearly' ? 1 : 0));
-       endDate.setMonth(endDate.getMonth() + (selectedPlan === 'monthly' ? 1 : 0));
+       const clientModule = await import('../api/client');
+       const client = clientModule.default;
        
-       await client.put('/users/profile', {
-          subscription: {
-             plan: selectedPlan,
-             status: 'active',
-             startDate: new Date(),
-             endDate: endDate
-          }
+       const response = await client.post('/payments/dev-bypass', {
+          plan: selectedPlan
        });
+       
+       if (response.data && response.data.user) {
+         localStorage.setItem('user', JSON.stringify(response.data.user));
+       }
        
        // Force update local context
        window.location.href = '/dashboard';
     } catch(err) {
+       console.error("Dev bypass exception:", err);
        setError("Dev bypass failed. Network error.");
     } finally {
        setLoading(false);

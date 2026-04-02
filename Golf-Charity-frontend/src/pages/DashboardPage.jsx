@@ -19,19 +19,22 @@ export const DashboardPage = () => {
   useEffect(() => {
     const fetchRealData = async () => {
       try {
-        const [activeDrawRes, historyRes] = await Promise.all([
+        const client = (await import('../api/client')).default;
+        const [activeDrawRes, historyRes, profileRes] = await Promise.all([
           drawsAPI.getCurrent().catch(() => ({ data: { draw: null } })),
-          drawsAPI.getHistory().catch(() => ({ data: { draws: [] } }))
+          drawsAPI.getHistory().catch(() => ({ data: { draws: [] } })),
+          client.get('/users/profile').catch(() => ({ data: { user: user } }))
         ]);
         
         setActiveDraw(activeDrawRes.data.draw || null);
         const allDraws = historyRes.data.draws || historyRes.data || [];
+        const fullUser = profileRes.data.user || user;
 
         setStats({
-          averageScore: user?.scores?.length > 0 ? Math.round(user.scores.reduce((a, b) => a + (b.stablefordPoints || 0), 0) / user.scores.length) : '-',
+          averageScore: fullUser?.scores?.length > 0 ? Math.round(fullUser.scores.reduce((a, b) => a + (b.stablefordPoints || 0), 0) / fullUser.scores.length) : '-',
           totalDraws: allDraws.length,
-          winnings: user?.totalWinnings || 0,
-          charity: user?.charityId || { name: 'None Selected', icon: '❤️' }
+          winnings: fullUser?.totalWinnings || 0,
+          charity: fullUser?.charityId && typeof fullUser.charityId === 'object' ? fullUser.charityId : { name: 'None Selected', icon: '❤️' }
         });
       } catch (err) {
         console.error('Failed to load dashboard data:', err);
@@ -122,7 +125,11 @@ export const DashboardPage = () => {
                       </div>
                     </div>
                   ) : (
-                    <div className="p-8 text-center text-muted">No active draw running explicitly right now on node server.</div>
+                    <div className="p-8 flex flex-col items-center justify-center text-center bg-surface border border-dashed border-border rounded-lg h-full">
+                      <span className="text-4xl mb-3">⏳</span>
+                      <h3 className="font-playfair text-xl font-bold text-ink mb-2">No Active Draw</h3>
+                      <p className="text-muted text-sm max-w-sm">There are currently no active draws running on the platform. We will notify you when the next monthly contest begins.</p>
+                    </div>
                   )}
                   <button className="w-full mt-6 py-2 px-4 rounded-lg bg-accent text-white font-600 hover:bg-opacity-90 transition-all">Review Live Ticket Details</button>
                 </div>

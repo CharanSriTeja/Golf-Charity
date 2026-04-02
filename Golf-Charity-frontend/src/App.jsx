@@ -15,20 +15,14 @@ import { LoginPage } from "./pages/LoginPage";
 import { SignupPage } from "./pages/SignupPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { ScoresPage } from "./pages/ScoresPage";
+import { CheckoutPage } from "./pages/CheckoutPage";
 import { MyCharityPage } from "./pages/MyCharityPage";
 import { DrawParticipationPage } from "./pages/DrawParticipationPage";
 import { WinningsPage } from "./pages/WinningsPage";
-import { AdminDashboardPage } from "./pages/AdminDashboardPage";
-import { UserManagementPage } from "./pages/UserManagementPage";
-import { DrawManagementPage } from "./pages/DrawManagementPage";
-import { CharityManagementPage } from "./pages/CharityManagementPage";
-import { PayoutManagementPage } from "./pages/PayoutManagementPage";
-import { CheckoutPage } from "./pages/CheckoutPage";
 import { PaymentSuccessPage } from "./pages/PaymentSuccessPage";
 import { PaymentFailurePage } from "./pages/PaymentFailurePage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { ForgotPasswordPage } from "./pages/ForgotPasswordPage";
-import { SubscriptionsManagementPage } from "./pages/SubscriptionsManagementPage";
 
 import "./App.css";
 
@@ -109,38 +103,7 @@ export default function App() {
             </ProtectedRoute>
           } />
           
-          {/* Admin Routes (Protected) */}
-          <Route path="/admin" element={
-            <ProtectedRoute requiredRole="admin">
-              <AdminDashboardPage />
-            </ProtectedRoute>
-          } />
-          <Route path="/admin/users" element={
-            <ProtectedRoute requiredRole="admin">
-              <UserManagementPage />
-            </ProtectedRoute>
-          } />
-          <Route path="/admin/draws" element={
-            <ProtectedRoute requiredRole="admin">
-              <DrawManagementPage />
-            </ProtectedRoute>
-          } />
-          <Route path="/admin/charities" element={
-            <ProtectedRoute requiredRole="admin">
-              <CharityManagementPage />
-            </ProtectedRoute>
-          } />
-          <Route path="/admin/payouts" element={
-            <ProtectedRoute requiredRole="admin">
-              <PayoutManagementPage />
-            </ProtectedRoute>
-          } />
-          <Route path="/admin/subscriptions" element={
-            <ProtectedRoute requiredRole="admin">
-              <SubscriptionsManagementPage />
-            </ProtectedRoute>
-          } />
-          
+          {/* Admin Routes effectively decoupled. Ensure server logic handles permissions */}
           {/* Payment Routes */}
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/payment/success" element={<PaymentSuccessPage />} />
