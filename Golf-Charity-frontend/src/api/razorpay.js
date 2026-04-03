@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-import apiClient from "./client";
-=======
 import client from "./client";
->>>>>>> 3573165d2517146ca12a25661b2346f5ed252aa9
 
 export const razorpayApi = {
   // Create a Razorpay order

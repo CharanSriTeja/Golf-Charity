@@ -5,6 +5,7 @@ import { Button } from '../components/Button';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { DONATION_PERCENTAGE_RANGE } from '../utils/constants';
 import { charitiesAPI } from '../api/charities';
+import client from '../api/client';
 
 export const MyCharityPage = () => {
   const { user, updateUser } = useAuth();
@@ -31,7 +32,6 @@ export const MyCharityPage = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const client = require('../api/client').default;
       await client.put('/users/profile', { charityId: selectedCharity, donationPercentage });
       await updateUser({ ...user, charityId: selectedCharity, donationPercentage });
       setSuccess(true);

@@ -4,6 +4,7 @@ import { DashboardSidebar } from '../components/DashboardSidebar';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { LoadingSpinner } from '../components/LoadingSpinner';
+import client from '../api/client';
 
 export const ProfilePage = () => {
   const { user, login } = useAuth();
@@ -31,7 +32,6 @@ export const ProfilePage = () => {
   const handleSave = async () => {
     setLoading(true);
     try {
-      const client = require('../api/client').default;
       const res = await client.put('/users/profile', formData);
       // Wait, users cannot freely modify email if it breaks JWT, but we mock success:
       setProfile(formData);

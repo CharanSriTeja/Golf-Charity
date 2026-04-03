@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { DashboardSidebar } from '../components/DashboardSidebar';
 import { formatters } from '../utils/formatters';
 import { useAuth } from '../hooks/useAuth';
+import client from '../api/client';
 
 export const WinningsPage = () => {
   const { user } = useAuth();
@@ -21,7 +22,6 @@ export const WinningsPage = () => {
     // Standardizing the dynamic transactions using client logic
     const fetchTransactions = async () => {
       try {
-        const client = require('../api/client').default;
         // In a real database we would fetch user specifically matched winnings distributions.
         // We'll proxy through transactions filtered naturally here:
         const tnx = await client.get('/payments/transactions').catch(() => ({ data: { transactions: [] } }));
