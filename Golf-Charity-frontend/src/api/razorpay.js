@@ -1,10 +1,14 @@
+<<<<<<< HEAD
 import apiClient from "./client";
+=======
+import client from "./client";
+>>>>>>> 3573165d2517146ca12a25661b2346f5ed252aa9
 
 export const razorpayApi = {
   // Create a Razorpay order
   createOrder: async (plan) => {
     try {
-      const response = await apiClient.post("/payments/create-order", { plan });
+      const response = await client.post("/payments/create-order", { plan });
       return response.data;
     } catch (error) {
       throw error.response?.data || error;
@@ -14,7 +18,7 @@ export const razorpayApi = {
   // Verify payment
   verifyPayment: async (paymentData) => {
     try {
-      const response = await apiClient.post("/payments/verify", paymentData);
+      const response = await client.post("/payments/verify", paymentData);
       return response.data;
     } catch (error) {
       throw error.response?.data || error;
@@ -24,7 +28,7 @@ export const razorpayApi = {
   // Get subscription plans
   getPlans: async () => {
     try {
-      const response = await apiClient.get("/payments/plans");
+      const response = await client.get("/payments/plans");
       return response.data;
     } catch (error) {
       throw error.response?.data || error;
@@ -34,7 +38,7 @@ export const razorpayApi = {
   // Get transaction history
   getTransactions: async (params = {}) => {
     try {
-      const response = await apiClient.get("/payments/transactions", { params });
+      const response = await client.get("/payments/transactions", { params });
       return response.data;
     } catch (error) {
       throw error.response?.data || error;
@@ -44,7 +48,7 @@ export const razorpayApi = {
   // Cancel subscription
   cancelSubscription: async () => {
     try {
-      const response = await apiClient.post("/payments/cancel-subscription");
+      const response = await client.post("/payments/cancel-subscription");
       return response.data;
     } catch (error) {
       throw error.response?.data || error;

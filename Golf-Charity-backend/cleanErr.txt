@@ -1,0 +1,6 @@
+TypeError: next is not a function
+    at model.<anonymous> (file:///D:/Golf-Charity/Golf-Charity-backend/models/User.js:87:5)
+    at async Kareem.execPre (D:\Golf-Charity\Golf-Charity-backend\node_modules\kareem\index.js:70:24)
+    at async model.$__save (D:\Golf-Charity\Golf-Charity-backend\node_modules\mongoose\lib\model.js:394:5)
+    at async model.save (D:\Golf-Charity\Golf-Charity-backend\node_modules\mongoose\lib\model.js:664:5)
+    at async seedAdmin (file:///D:/Golf-Charity/Golf-Charity-backend/seedAdmin.js:34:5)

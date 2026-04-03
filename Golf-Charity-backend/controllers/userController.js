@@ -2,11 +2,11 @@ import User from '../models/User.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
 
 export const updateProfile = asyncHandler(async (req, res) => {
-  const { name, phone, city, state, country, charityId, donationPercentage } = req.body;
+  const { name, phone, city, state, country, charityId, donationPercentage, scores } = req.body;
 
   const user = await User.findByIdAndUpdate(
     req.user.id,
-    { name, phone, city, state, country, charityId, donationPercentage },
+    { name, phone, city, state, country, charityId, donationPercentage, scores },
     { new: true, runValidators: true }
   ).populate('charityId');
 
@@ -60,11 +60,11 @@ export const getUserById = asyncHandler(async (req, res) => {
 });
 
 export const updateUser = asyncHandler(async (req, res) => {
-  const { name, phone, city, state, country, role, isActive } = req.body;
+  const { name, phone, city, state, country, role, isActive, scores, charityId, donationPercentage } = req.body;
 
   const user = await User.findByIdAndUpdate(
     req.params.id,
-    { name, phone, city, state, country, role, isActive },
+    { name, phone, city, state, country, role, isActive, scores, charityId, donationPercentage },
     { new: true, runValidators: true }
   ).populate('charityId');
 

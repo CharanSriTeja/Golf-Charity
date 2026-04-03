@@ -31,6 +31,7 @@ export const SignupPage = () => {
     const loadCharities = async () => {
       try {
         const response = await charitiesAPI.getAll();
+<<<<<<< HEAD
         console.log("Charities response:", response);
 
         const data = response?.data;
@@ -43,6 +44,9 @@ export const SignupPage = () => {
         } else {
           setCharities([]);
         }
+=======
+        setCharities(response.data.charities || response.data || []);
+>>>>>>> 3573165d2517146ca12a25661b2346f5ed252aa9
       } catch (err) {
         console.error('Failed to load charities:', err);
         setCharities([]);
@@ -170,6 +174,7 @@ export const SignupPage = () => {
                 onChange={handleChange}
                 className="w-full border p-2 rounded"
               >
+<<<<<<< HEAD
                 <option value="">Choose charity</option>
 
                 {Array.isArray(charities) &&
@@ -180,6 +185,14 @@ export const SignupPage = () => {
                   ))
                 }
 
+=======
+                <option value="">Choose a charity...</option>
+                {charities.map(charity => (
+                  <option key={charity._id || charity.id} value={charity._id || charity.id}>
+                    {charity.name}
+                  </option>
+                ))}
+>>>>>>> 3573165d2517146ca12a25661b2346f5ed252aa9
               </select>
 
               {charLoading && (

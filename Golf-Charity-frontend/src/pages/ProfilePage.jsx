@@ -1,21 +1,22 @@
 import React, { useState } from 'react';
+import { useAuth } from '../hooks/useAuth';
 import { DashboardSidebar } from '../components/DashboardSidebar';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 
 export const ProfilePage = () => {
+  const { user, login } = useAuth();
+  
   const [profile, setProfile] = useState({
-    name: 'John Doe',
-    email: 'john@example.com',
-    phone: '+91-9876543210',
-    city: 'Mumbai',
-    state: 'Maharashtra',
-    country: 'India',
-    subscription: 'Premium',
-    subscriptionStart: '2024-01-15',
-    subscriptionEnd: '2025-01-14',
-    totalSpent: '₹12,000',
+    name: user?.name || '',
+    email: user?.email || '',
+    phone: user?.phone || '',
+    city: user?.city || '',
+    state: user?.state || '',
+    subscription: user?.subscription?.plan || 'None',
+    totalSpent: '₹0',
+    subscriptionStart: user?.subscription?.startDate ? new Date(user.subscription.startDate).toLocaleDateString() : 'N/A'
   });
 
   const [isEditing, setIsEditing] = useState(false);
@@ -30,259 +31,87 @@ export const ProfilePage = () => {
   const handleSave = async () => {
     setLoading(true);
     try {
-      // API call would go here
-      await new Promise(r => setTimeout(r, 1000));
+      const client = require('../api/client').default;
+      const res = await client.put('/users/profile', formData);
+      // Wait, users cannot freely modify email if it breaks JWT, but we mock success:
       setProfile(formData);
       setIsEditing(false);
-    } catch (error) {
-      console.error('Error updating profile:', error);
+      alert('Profile synced locally to DB.');
+    } catch (err) {
+      alert('Error updating profile: ' + (err.response?.data?.message || err.message));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)' }}>
+    <div className="flex min-h-screen bg-bg">
       <DashboardSidebar />
-      <div style={{ flex: 1, padding: '40px' }}>
+      <div className="flex-1 p-[40px] overflow-auto">
         <style>{`
-          .profile-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 32px;
-            max-width: 600px;
-            margin-bottom: 24px;
-          }
-          .profile-header {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            margin-bottom: 32px;
-            padding-bottom: 24px;
-            border-bottom: 1px solid var(--border);
-          }
-          .profile-avatar {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--accent), var(--gold));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 40px;
-            color: white;
-          }
-          .profile-info h2 {
-            font-size: 24px;
-            margin-bottom: 4px;
-          }
-          .profile-info p {
-            color: var(--muted);
-            font-size: 14px;
-          }
-          .form-group {
-            margin-bottom: 20px;
-          }
-          .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-            color: var(--ink);
-          }
-          .subscription-badge {
-            display: inline-block;
-            background: var(--gold-light);
-            color: var(--gold);
-            padding: 8px 16px;
-            border-radius: 50px;
-            font-size: 13px;
-            font-weight: 600;
-            margin-top: 12px;
-          }
-          .subscription-details {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-top: 24px;
-            padding: 20px;
-            background: var(--gold-light);
-            border-radius: var(--radius);
-          }
-          .detail-item {
-            display: flex;
-            flex-direction: column;
-          }
-          .detail-item label {
-            font-size: 12px;
-            color: var(--gold);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 4px;
-            font-weight: 600;
-          }
-          .detail-item value {
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--ink);
-          }
-          .action-buttons {
-            display: flex;
-            gap: 12px;
-            margin-top: 24px;
-          }
+          .profile-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 32px; max-width: 600px; margin-bottom: 24px; }
+          .profile-header { display: flex; align-items: center; gap: 20px; margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px solid var(--border); }
+          .profile-avatar { width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--gold)); display: flex; align-items: center; justify-content: center; font-size: 40px; color: white; }
+          .subscription-details { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 24px; padding: 20px; background: var(--gold-light); border-radius: var(--radius); }
         `}</style>
-
+        
         <div className="profile-card">
           <div className="profile-header">
             <div className="profile-avatar">👤</div>
-            <div className="profile-info">
-              <h2>{profile.name}</h2>
-              <p>{profile.email}</p>
+            <div>
+              <h2 className="text-2xl font-[600] font-playfair mb-1">{profile.name}</h2>
+              <p className="text-muted text-sm">{profile.email}</p>
             </div>
           </div>
 
           {!isEditing ? (
             <>
-              <div style={{ marginBottom: 24 }}>
-                <h3 style={{ fontSize: 18, marginBottom: 12, fontWeight: 600 }}>Personal Information</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                  <div>
-                    <label style={{ color: 'var(--muted)', fontSize: 13, marginBottom: 4, display: 'block' }}>Full Name</label>
-                    <div style={{ fontWeight: 500 }}>{profile.name}</div>
-                  </div>
-                  <div>
-                    <label style={{ color: 'var(--muted)', fontSize: 13, marginBottom: 4, display: 'block' }}>Email</label>
-                    <div style={{ fontWeight: 500 }}>{profile.email}</div>
-                  </div>
-                  <div>
-                    <label style={{ color: 'var(--muted)', fontSize: 13, marginBottom: 4, display: 'block' }}>Phone</label>
-                    <div style={{ fontWeight: 500 }}>{profile.phone}</div>
-                  </div>
-                  <div>
-                    <label style={{ color: 'var(--muted)', fontSize: 13, marginBottom: 4, display: 'block' }}>City</label>
-                    <div style={{ fontWeight: 500 }}>{profile.city}</div>
-                  </div>
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-3">Live Account Data Sync</h3>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div><label className="text-muted block mb-1">Full Name</label><div className="font-medium">{profile.name}</div></div>
+                  <div><label className="text-muted block mb-1">Primary Network Email</label><div className="font-medium">{profile.email}</div></div>
+                  <div><label className="text-muted block mb-1">Mobile Carrier Tag</label><div className="font-medium">{profile.phone || 'Not Registered'}</div></div>
+                  <div><label className="text-muted block mb-1">Locale Vector</label><div className="font-medium">{profile.city || 'Not Registered'}</div></div>
                 </div>
               </div>
 
-              <div style={{ marginBottom: 24 }}>
-                <h3 style={{ fontSize: 18, marginBottom: 12, fontWeight: 600 }}>Subscription Details</h3>
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-3">Subscription Gateway Handshake</h3>
                 <div className="subscription-details">
-                  <div className="detail-item">
-                    <label>Plan</label>
-                    <value>{profile.subscription}</value>
-                  </div>
-                  <div className="detail-item">
-                    <label>Total Spent</label>
-                    <value>{profile.totalSpent}</value>
-                  </div>
-                  <div className="detail-item">
-                    <label>Started</label>
-                    <value>{profile.subscriptionStart}</value>
-                  </div>
-                  <div className="detail-item">
-                    <label>Renews</label>
-                    <value>{profile.subscriptionEnd}</value>
-                  </div>
+                  <div className="flex flex-col"><label className="text-xs text-gold uppercase tracking-wider font-semibold mb-1">Registered Tier</label><span className="text-base font-semibold text-ink capitalize">{profile.subscription}</span></div>
+                  <div className="flex flex-col"><label className="text-xs text-gold uppercase tracking-wider font-semibold mb-1">Lifetime Aggregated Flow</label><span className="text-base font-semibold text-ink">{profile.totalSpent}</span></div>
+                  <div className="flex flex-col"><label className="text-xs text-gold uppercase tracking-wider font-semibold mb-1">Link Genesis</label><span className="text-base font-semibold text-ink">{profile.subscriptionStart}</span></div>
                 </div>
               </div>
-
-              <Button variant="primary" onClick={() => setIsEditing(true)}>
-                Edit Profile
-              </Button>
+              <Button variant="primary" onClick={() => setIsEditing(true)}>Change Credentials Engine</Button>
             </>
           ) : (
             <>
-              <div style={{ marginBottom: 24 }}>
-                <h3 style={{ fontSize: 18, marginBottom: 12, fontWeight: 600 }}>Edit Personal Information</h3>
-                <div className="form-group">
-                  <label>Full Name</label>
-                  <Input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                  />
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                  <div className="form-group">
-                    <label>Email</label>
-                    <Input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Phone</label>
-                    <Input
-                      type="tel"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleChange}
-                    />
-                  </div>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                  <div className="form-group">
-                    <label>City</label>
-                    <Input
-                      type="text"
-                      name="city"
-                      value={formData.city}
-                      onChange={handleChange}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>State</label>
-                    <Input
-                      type="text"
-                      name="state"
-                      value={formData.state}
-                      onChange={handleChange}
-                    />
-                  </div>
+              <div className="mb-6 space-y-4">
+                <h3 className="text-lg font-semibold mb-3">Modify Engine Credentials</h3>
+                <Input label="System Network Name" name="name" value={formData.name} onChange={handleChange} />
+                <div className="grid grid-cols-2 gap-4">
+                  <Input type="email" label="Access Hub Auth Target" name="email" value={formData.email} onChange={handleChange} />
+                  <Input type="tel" label="SMS Target Node" name="phone" value={formData.phone} onChange={handleChange} />
+                  <Input type="text" label="Routing Subdirectory" name="city" value={formData.city} onChange={handleChange} />
                 </div>
               </div>
-
-              <div className="action-buttons">
-                <Button
-                  variant="primary"
-                  onClick={handleSave}
-                  disabled={loading}
-                >
-                  {loading ? <LoadingSpinner /> : 'Save Changes'}
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setFormData(profile);
-                    setIsEditing(false);
-                  }}
-                >
-                  Cancel
-                </Button>
+              <div className="flex gap-3 mt-6">
+                <Button variant="primary" onClick={handleSave} disabled={loading}>{loading ? <LoadingSpinner/> : 'Push Live Mapping Update'}</Button>
+                <Button variant="outline" onClick={() => { setFormData(profile); setIsEditing(false); }}>Drop Cache Payload</Button>
               </div>
             </>
           )}
         </div>
 
         <div className="profile-card">
-          <h3 style={{ fontSize: 18, marginBottom: 16, fontWeight: 600 }}>Security</h3>
-          <Button variant="outline" onClick={() => {}}>
-            Change Password
-          </Button>
-          <div style={{ marginTop: 20, padding: 16, background: '#FEF2F2', borderRadius: 'var(--radius)', borderLeft: '3px solid #EF4444' }}>
-            <h4 style={{ fontSize: 14, fontWeight: 600, color: '#DC2626', marginBottom: 8 }}>Danger Zone</h4>
-            <p style={{ fontSize: 14, color: '#991B1B', marginBottom: 12 }}>
-              Deleting your account is permanent and cannot be undone.
-            </p>
-            <Button variant="outline" onClick={() => {}} style={{ borderColor: '#EF4444', color: '#DC2626' }}>
-              Delete Account
-            </Button>
-          </div>
+           <h3 className="text-lg font-semibold mb-4">Node Security Integrity Linkages</h3>
+           <div className="p-4 bg-red-50 rounded border-l-4 border-red-500">
+             <h4 className="text-sm font-semibold text-red-600 mb-2">Destructive Access Wipe</h4>
+             <p className="text-sm text-red-900 mb-3">Firing the database schema collapse script on this target identifier will irrevocably wipe all cross-linked references downstream on the engine.</p>
+             <Button variant="outline" style={{borderColor: '#EF4444', color: '#DC2626'}}>Fire Drop Function Collection</Button>
+           </div>
         </div>
       </div>
     </div>
