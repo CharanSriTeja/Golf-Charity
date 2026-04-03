@@ -52,8 +52,7 @@ const userSchema = new mongoose.Schema({
     },
     startDate: Date,
     endDate: Date,
-    stripeCustomerId: String,
-    stripeSubscriptionId: String,
+    razorpayCustomerId: String,
   },
   totalSpent: {
     type: Number,

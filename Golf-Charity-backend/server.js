@@ -4,7 +4,10 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
+import "dotenv/config";
 import { errorHandler } from './middleware/errorHandler.js';
+
+dotenv.config();
 
 // Import routes
 import authRoutes from './routes/authRoutes.js';
@@ -13,8 +16,6 @@ import scoreRoutes from './routes/scoreRoutes.js';
 import drawRoutes from './routes/drawRoutes.js';
 import charityRoutes from './routes/charityRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
-
-dotenv.config();
 
 const app = express();
 
