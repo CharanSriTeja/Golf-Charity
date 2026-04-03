@@ -74,16 +74,18 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const logout = useCallback(async () => {
-    try {
-      await authAPI.logout();
-    } catch (err) {
-      console.warn("Logout API failed, continuing local logout", err);
-    }
+    // Optimistically clear local state immediately
     setUser(null);
     setToken(null);
     setError(null);
     localStorage.removeItem('authToken');
     localStorage.removeItem('user');
+
+    try {
+      await authAPI.logout();
+    } catch (err) {
+      console.warn("Logout API failed", err);
+    }
   }, []);
 
   const updateUser = useCallback((updatedUser) => {

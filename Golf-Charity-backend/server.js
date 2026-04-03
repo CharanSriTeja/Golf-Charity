@@ -4,10 +4,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
-import "dotenv/config";
 import { errorHandler } from './middleware/errorHandler.js';
-
-dotenv.config();
 
 // Import routes
 import authRoutes from './routes/authRoutes.js';
@@ -16,6 +13,8 @@ import scoreRoutes from './routes/scoreRoutes.js';
 import drawRoutes from './routes/drawRoutes.js';
 import charityRoutes from './routes/charityRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
+
+dotenv.config();
 
 const app = express();
 
@@ -28,9 +27,14 @@ app.use(cors({
   credentials: true,
 }));
 
+if (!process.env.MONGODB_URI) {
+  console.error('FATAL ERROR: MONGODB_URI is not defined in .env file.');
+  process.exit(1);
+}
+
 // Database Connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/golf-charity')
-  .then(() => console.log('MongoDB connected'))
+mongoose.connect(process.env.MONGODB_URI)
+  .then(() => console.log('MongoDB connected to ' + process.env.MONGODB_URI))
   .catch((err) => {
     console.error('MongoDB connection error:', err);
     process.exit(1);
